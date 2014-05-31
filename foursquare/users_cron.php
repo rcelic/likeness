@@ -43,72 +43,72 @@ $sqlRefresh="select userID,foursquareUserID,foursquareToken,foursquareLastRefres
 $data[] = '';
 $rsRefresh = $db->Query($sqlRefresh,$data);
 $arrayRefresh = $rsRefresh->returnArray();
+
+		
+	//echo "<p>refreshing for some reason</p>";
 	
-if($arrayRefresh)
-    {
-		
-    	//echo "<p>refreshing for some reason</p>";
-		
-		foreach ($arrayRefresh as $tmp)
-		{
-    	
-    	$foursquareUserID = $tmp['1'];
-    	$fsObjUnAuth->setAccessToken($_COOKIE['access_token']);
-        $checkins = $fsObjUnAuth->get('/users/'.$tmp[1].'/checkins', 
-        								array('afterTimestamp' => $tmp[3],
-        										'oauth_token' => $tmp[2]
-        								));
-        $array = objectToArray($checkins->response);
-        foreach ($array['checkins']['items'] as $tmp)
-		   {
-			   	$createdAt = $tmp['createdAt'];
-			   	$foursquareCheckInID = $tmp['id'];
-				$foursquareID = $tmp['venue']['id'];
-				$placeName = $tmp['venue']['name'];
-				$placeAddress = $tmp['venue']['location']['address'];
-				$placeLat = $tmp['venue']['location']['lat'];
-				$placeLng = $tmp['venue']['location']['lng'];
-				$placeCity = $tmp['venue']['location']['city'];
-				$placeState = $tmp['venue']['location']['state'];
-				$placeCountry = $tmp['venue']['location']['country'];
-				$placeURL = $tmp['venue']['url'];
-				$placeType = $tmp['venue']['categories'][0]['name'];
-				$foursquareLike = $tmp['venue']['like'];
-				
-				echo $placeName."<hr>";
-				unset($data);
-				 
-				$sql="INSERT INTO placeDetailsFSQ(placeName, placeAddress, placeLat, placeLng, placeCity, placeState, placeCountry, foursquareID, placeURL, placeType, foursquareLike, foursquareCheckInID, createdAt, foursquareUserID) 
-				VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-				
-				$data[] = $placeName;
-				$data[] = $placeAddress;
-				$data[] = $placeLat;
-				$data[] = $placeLng;
-				$data[] = $placeCity;
-				$data[] = $placeState;
-				$data[] = $placeCountry;
-				$data[] = $foursquareID;
-				$data[] = $placeURL;
-				$data[] = $placeType;
-				$data[] = $foursquareLike;
-				$data[] = $foursquareCheckInID;
-				$data[] = $createdAt;
-				$data[] = $foursquareUserID;
-				
-				$rs = $db->Query($sql,$data);
-				
-			}
+	foreach ($arrayRefresh as $tmp)
+	{
+	
+	$foursquareToken = $tmp['2'];
+	$foursquareUserID = $tmp['1'];
+	$time=time();
+	echo "<p>".$time."</p>";
+	$fsObjUnAuth->setAccessToken($foursquareToken );
+    $checkins = $fsObjUnAuth->get('/users/'.$tmp[1].'/checkins', 
+    								array('afterTimestamp' => $tmp[3]
+    								));
+    $array = objectToArray($checkins->response);
+    foreach ($array['checkins']['items'] as $tmp)
+	   {
+		   	$createdAt = $tmp['createdAt'];
+		   	$foursquareCheckInID = $tmp['id'];
+			$foursquareID = $tmp['venue']['id'];
+			$placeName = $tmp['venue']['name'];
+			$placeAddress = $tmp['venue']['location']['address'];
+			$placeLat = $tmp['venue']['location']['lat'];
+			$placeLng = $tmp['venue']['location']['lng'];
+			$placeCity = $tmp['venue']['location']['city'];
+			$placeState = $tmp['venue']['location']['state'];
+			$placeCountry = $tmp['venue']['location']['country'];
+			$placeURL = $tmp['venue']['url'];
+			$placeType = $tmp['venue']['categories'][0]['name'];
+			$foursquareLike = $tmp['venue']['like'];
+			
+			echo $placeName."<hr>";
 			unset($data);
-		$sqlRefreshUpdate = "update userGeneral set foursquareLastRefresh = ?  where foursquareUserID = ?";
-    	
-    	$data[] = time();
-    	$data[] = $foursquareUserID;
-    	
-    	$rsRefreshUpdate = $db->Query($sqlRefreshUpdate,$data);	
-    	echo "<h4>check in's refreshed.  <a href='../index.php'>link other accounts</a></h4>";
+			 
+			$sql="INSERT INTO placeDetailsFSQ(placeName, placeAddress, placeLat, placeLng, placeCity, placeState, placeCountry, foursquareID, placeURL, placeType, foursquareLike, foursquareCheckInID, createdAt, foursquareUserID) 
+			VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			
+			$data[] = $placeName;
+			$data[] = $placeAddress;
+			$data[] = $placeLat;
+			$data[] = $placeLng;
+			$data[] = $placeCity;
+			$data[] = $placeState;
+			$data[] = $placeCountry;
+			$data[] = $foursquareID;
+			$data[] = $placeURL;
+			$data[] = $placeType;
+			$data[] = $foursquareLike;
+			$data[] = $foursquareCheckInID;
+			$data[] = $createdAt;
+			$data[] = $foursquareUserID;
+			
+			$rs = $db->Query($sql,$data);
+			
 		}
+		unset($data);
+	$sqlRefreshUpdate = "update userGeneral set foursquareLastRefresh = ?  where foursquareUserID = ?";
 	
-    }
+	$data[] = $time;
+	$data[] = $foursquareUserID;
+	
+	$rsRefreshUpdate = $db->Query($sqlRefreshUpdate,$data);	
+	echo "<h4>check in's refreshed.  <a href='../index.php'>link other accounts</a></h4>";
+	}
+	
+    
 
 ?>
